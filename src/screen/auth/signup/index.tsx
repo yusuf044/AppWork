@@ -1,5 +1,6 @@
 import React, {useContext, useState} from 'react';
 import {
+  Alert,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
@@ -8,40 +9,49 @@ import {
   Text,
   TextInput,
 } from 'react-native';
-
 //context Api
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {AuthStackParmsList} from '../routes/AuthStack';
 import AppwriteContext from '../../../appwrite/AppwriteContext';
-type LoginScreenProps = NativeStackScreenProps<AuthStackParmsList, 'Signup'>;
+type SignupScreenProps = NativeStackScreenProps<AuthStackParmsList, 'Signup'>;
 
-const LoginScene = ({navigation}: LoginScreenProps) => {
+const SignupScene = ({navigation}: SignupScreenProps) => {
   const {appwrite, setIsLoggedIn} = useContext(AppwriteContext);
   const [error, setError] = useState<string>('');
+  const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [passwod, setPasswod] = useState<string>('');
-  const handleLogin = () => {
-    if (email.length < 1 || passwod.length < 1) {
+  const [repetpassword, setRepetpassword] = useState<string>('');
+  const handelSignup = () => {
+    if (
+      name.length < 1 ||
+      email.length < 1 ||
+      passwod.length < 1 ||
+      repetpassword.length < 1
+    ) {
       setError('All fileds Are Required');
+    } else if (passwod !== repetpassword) {
+      setError('Passwords do not match');
     } else {
       const user = {
         email,
         passwod,
+        name,
       };
       appwrite
-        .login(user)
+        .createAccount(user)
         .then((response: any) => {
           if (response) {
             setIsLoggedIn(true);
             Snackbar.show({
-              text: 'Login Succesfully',
+              text: 'Signup Succesfully',
               duration: Snackbar.LENGTH_SHORT,
             });
           }
         })
         .catch(e => {
           console.log('======e', e);
-          setEmail('Incorrect email or password');
+          setError(e.message);
         });
     }
   };
@@ -61,12 +71,23 @@ const LoginScene = ({navigation}: LoginScreenProps) => {
         resizeMode="cover"
         style={styles.formContiouner}>
         <Text style={styles.appName}>AppWrite Auth</Text>
-
+        {/* Name */}
+        <TextInput
+          value={name}
+          onChangeText={text => {
+            setError('');
+            setName(text);
+          }}
+          placeholderTextColor={'#AEAEAE'}
+          placeholder="Name"
+          style={styles.input}
+        />
         {/* Email */}
         <TextInput
           keyboardType="email-address"
           value={email}
           onChangeText={text => {
+            setError('');
             setEmail(text);
           }}
           placeholderTextColor={'#AEAEAE'}
@@ -78,28 +99,39 @@ const LoginScene = ({navigation}: LoginScreenProps) => {
           secureTextEntry
           value={passwod}
           onChangeText={text => {
+            setError('');
             setPasswod(text);
           }}
           placeholderTextColor={'#AEAEAE'}
           placeholder="Password"
           style={styles.input}
         />
-
+        {/* Repeat Password */}
+        <TextInput
+          secureTextEntry
+          value={repetpassword}
+          onChangeText={text => {
+            setError('');
+            setRepetpassword(text);
+          }}
+          placeholderTextColor={'#AEAEAE'}
+          placeholder="Repeat Password"
+          style={styles.input}
+        />
         {/* Valedation Error */}
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        {/* Login Button */}
+        {/* Signup Button */}
         <Pressable
-          onPress={handleLogin}
+          // onPress={handelSignup}
           style={[styles.btn, {marginTop: error ? 10 : 20}]}>
-          <Text style={styles.btnTxt}>Login</Text>
+          <Text style={styles.btnTxt}>Sign Up</Text>
         </Pressable>
         {/* Login Navigation */}
         <Pressable
-          onPress={() => navigation.navigate('Signup')}
+          onPress={() => navigation.navigate('Login')}
           style={styles.loginContiouner}>
           <Text style={styles.haveAccountLabel}>
-            Don`t have an account{' '}
-            <Text style={styles.loginLabel}>Create an account</Text>
+            Already have an account <Text style={styles.loginLabel}>Login</Text>
           </Text>
         </Pressable>
       </ImageBackground>
@@ -108,7 +140,7 @@ const LoginScene = ({navigation}: LoginScreenProps) => {
   );
 };
 
-export default LoginScene;
+export default SignupScene;
 
 const styles = StyleSheet.create({
   container: {
@@ -128,7 +160,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   input: {
-    backgroundColor: '#fef8fa',
+    backgroundColor: '#fef0fb',
     padding: 10,
     height: 60,
     alignSelf: 'center',
@@ -140,7 +172,7 @@ const styles = StyleSheet.create({
   btn: {
     backgroundColor: '#FFF',
     padding: 10,
-    height: 45,
+    height: 50,
     alignSelf: 'center',
     borderRadius: 5,
     width: '80%',
